@@ -1,0 +1,12 @@
+vk_staging=> SELECT * FROM photo WHERE id = 14;
+ id |                 url                  | owner_id |   description    |     uploaded_at     | size
+----+--------------------------------------+----------+------------------+---------------------+------
+ 14 | A738B54B-E6C1-DE14-56CF-AB749C147B88 |       37 | egestas blandit. | 2021-12-28 20:33:10 |  531
+(1 row)
+
+
+vk_staging=> SELECT * FROM users WHERE id = 14;
+ id | first_name | last_name |            email             |     phone      | main_photo_id |     created_at
+----+------------+-----------+------------------------------+----------------+---------------+---------------------
+ 14 | Jameson    | Valentine | ac.mattis.ornare@outlook.net | 1-817-207-9757 |           121 | 2023-04-27 12:52:29
+(1 row)

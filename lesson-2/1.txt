@@ -1,0 +1,7 @@
+CREATE TABLE subscriptions (
+	subscriber_id INT NOT NULL,
+	community_id INT DEFAULT(0),
+	user_id INT DEFAULT(0),
+	created_at TIMESTAMP,
+	PRIMARY KEY (subscriber_id, community_id, user_id)
+);
