@@ -1,0 +1,13 @@
+vk=# ALTER TABLE photo ADD COLUMN metadata JSON;
+ALTER TABLE
+vk=# UPDATE photo SET metadata = json_build_object(
+vk(# 'id',id,
+vk(# 'url',url,
+vk(# 'size',size
+vk(# );
+UPDATE 400
+vk=# SELECT metadata FROM photo WHERE id = 1;
+                                 metadata
+--------------------------------------------------------------------------
+ {"id" : 1, "url" : "ADE41C86-D47B-B2D7-93D8-47A36E2A6C9A", "size" : 992}
+(1 строка)

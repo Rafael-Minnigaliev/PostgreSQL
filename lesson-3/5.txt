@@ -1,0 +1,18 @@
+vk=# CREATE TYPE contacts AS (email VARCHAR(120), phone VARCHAR(15));
+CREATE TYPE
+vk=# ALTER TABLE users ADD COLUMN user_contacts contacts;
+ALTER TABLE
+vk=# UPDATE users SET user_contacts.phone = phone, user_contacts.email = email;
+UPDATE 200
+vk=# SELECT user_contacts FROM users WHERE id =21;
+                 user_contacts
+-----------------------------------------------
+ (augue.porttitor@hotmail.couk,1-832-997-4406)
+(1 строка)
+vk=# UPDATE users SET user_contacts.email = 'test@somemail.ru' WHERE id = 21;
+UPDATE 1
+vk=# SELECT user_contacts FROM users WHERE id =21;
+           user_contacts
+-----------------------------------
+ (test@somemail.ru,1-832-997-4406)
+(1 строка)

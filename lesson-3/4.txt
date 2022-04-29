@@ -1,0 +1,9 @@
+vk=# ALTER TABLE communities ADD COLUMN members VARCHAR[];
+ALTER TABLE
+vk=# UPDATE communities SET members = (SELECT ARRAY_AGG(user_id) FROM communities_users WHERE community_id = 7) WHERE id = 7;
+UPDATE 1
+vk=# SELECT members FROM communities WHERE id = 7;
+ members
+----------
+ {185,96}
+(1 строка)
