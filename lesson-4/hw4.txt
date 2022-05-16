@@ -1,0 +1,80 @@
+1.
+SELECT 
+	video.id,
+	(SELECT first_name FROM users WHERE users.id = video.owner_id),
+	(SELECT last_name FROM users WHERE users.id = video.owner_id),
+	(SELECT photo.url main_photo_url FROM photo WHERE photo.id = video.owner_id),
+	video.url v_url,
+	video.size
+	FROM video 
+		ORDER BY video.size DESC
+		LIMIT 10;
+
+
+
+2.
+CREATE TEMPORARY TABLE big_ten_video (
+	id INT,
+	url VARCHAR,
+	size INT,
+	owner_id INT
+);
+
+INSERT INTO big_ten_video
+	SELECT id, url, size, owner_id 
+	FROM video 
+	ORDER BY video.size DESC 
+	LIMIT 10;
+
+SELECT
+	big_ten_video.id,
+	first_name,
+	last_name,
+	photo.url main_photo_url,
+	big_ten_video.url v_url,
+	big_ten_video.size
+	FROM users
+		JOIN big_ten_video
+		ON users.id = big_ten_video.owner_id
+		JOIN photo 
+		ON users.main_photo_id = photo.id;
+
+
+3.
+WITH big_ten_video AS (
+	SELECT id, url, size, owner_id 
+	FROM video 
+	ORDER BY video.size DESC 
+	LIMIT 10
+) 
+SELECT
+	big_ten_video.id,
+	first_name,
+	last_name,
+	photo.url main_photo_url,
+	big_ten_video.url v_url,
+	big_ten_video.size
+	FROM users
+		JOIN big_ten_video
+		ON users.id = big_ten_video.owner_id
+		JOIN photo 
+		ON users.main_photo_id = photo.id
+		ORDER BY big_ten_video.size DESC;
+
+
+
+4.
+SELECT
+	video.id,
+	first_name,
+	last_name,
+	photo.url main_photo_url,
+	video.url v_url,
+	video.size
+	FROM video
+		JOIN users 
+		ON video.owner_id = users.id
+		JOIN photo 
+		ON users.main_photo_id = photo.id
+		ORDER BY video.size DESC 
+		LIMIT 10;
