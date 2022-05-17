@@ -3,7 +3,7 @@ SELECT
 	video.id,
 	(SELECT first_name FROM users WHERE users.id = video.owner_id),
 	(SELECT last_name FROM users WHERE users.id = video.owner_id),
-	(SELECT photo.url main_photo_url FROM photo WHERE photo.id = video.owner_id),
+	(SELECT photo.url main_photo_url FROM photo WHERE photo.id = (SELECT main_photo_id FROM users WHERE id = video.owner_id)),
 	video.url v_url,
 	video.size
 	FROM video 
@@ -36,7 +36,7 @@ SELECT
 	FROM users
 		JOIN big_ten_video
 		ON users.id = big_ten_video.owner_id
-		JOIN photo 
+		LEFT JOIN photo 
 		ON users.main_photo_id = photo.id;
 
 
@@ -57,7 +57,7 @@ SELECT
 	FROM users
 		JOIN big_ten_video
 		ON users.id = big_ten_video.owner_id
-		JOIN photo 
+		LEFT JOIN photo 
 		ON users.main_photo_id = photo.id
 		ORDER BY big_ten_video.size DESC;
 
@@ -74,7 +74,7 @@ SELECT
 	FROM video
 		JOIN users 
 		ON video.owner_id = users.id
-		JOIN photo 
+		LEFT JOIN photo 
 		ON users.main_photo_id = photo.id
 		ORDER BY video.size DESC 
 		LIMIT 10;
