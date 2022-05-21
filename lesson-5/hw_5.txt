@@ -1,0 +1,120 @@
+1.
+postgres=# CREATE ROLE fedors LOGIN;
+CREATE ROLE
+postgres=# CREATE ROLE romanb LOGIN;
+CREATE ROLE
+postgres=# CREATE ROLE analysts;
+CREATE ROLE
+postgres=# CREATE ROLE testers;
+CREATE ROLE
+postgres=# ALTER ROLE fedors WITH PASSWORD '1234';
+ALTER ROLE
+postgres=# ALTER ROLE romanb WITH PASSWORD '1234';
+ALTER ROLE
+postgres=# GRANT analysts TO fedors;
+GRANT ROLE
+postgres=# GRANT testers TO romanb;
+GRANT ROLE
+postgres=# \c vk
+Вы подключены к базе данных "vk" как пользователь "postgres".
+vk=# GRANT SELECT ON ALL TABLES IN SCHEMA public TO analysts;
+GRANT
+vk=# GRANT ALL ON ALL TABLES IN SCHEMA public TO testers;
+GRANT
+vk=# GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO testers;
+GRANT
+vk=# \q
+postgres@rafael-VirtualBox:/home/rafael$ psql -U fedors -d vk -h 127.0.0.1 -W
+Пароль:
+psql (13.6 (Ubuntu 13.6-1.pgdg20.04+1+b1))
+SSL-соединение (протокол: TLSv1.3, шифр: TLS_AES_256_GCM_SHA384, бит: 256, сжатие: выкл.)
+Введите "help", чтобы получить справку.
+
+vk=> SELECT * FROM users WHERE id = 1;
+ id | first_name | last_name |     email     |     phone      | main_photo_id |     created_at      |          user_contacts
+----+------------+-----------+---------------+----------------+---------------+---------------------+----------------------------------
+  1 | Kelsie     | Knox      | ut@icloud.org | (431) 383-6224 |             1 | 2023-02-18 05:24:46 | (ut@icloud.org,"(431) 383-6224")
+(1 строка)
+
+vk=> UPDATE users SET first_name = 'Alex' WHERE id = 1;
+ОШИБКА:  нет доступа к таблице users
+vk=> \q
+postgres@rafael-VirtualBox:/home/rafael$ psql -U romanb -d vk -h 127.0.0.1 -W
+Пароль:
+psql (13.6 (Ubuntu 13.6-1.pgdg20.04+1+b1))
+SSL-соединение (протокол: TLSv1.3, шифр: TLS_AES_256_GCM_SHA384, бит: 256, сжатие: выкл.)
+Введите "help", чтобы получить справку.
+
+vk=> SELECT * FROM users WHERE id = 1;
+ id | first_name | last_name |     email     |     phone      | main_photo_id |     created_at      |          user_contacts
+----+------------+-----------+---------------+----------------+---------------+---------------------+----------------------------------
+  1 | Kelsie     | Knox      | ut@icloud.org | (431) 383-6224 |             1 | 2023-02-18 05:24:46 | (ut@icloud.org,"(431) 383-6224")
+(1 строка)
+
+vk=> UPDATE users SET first_name = 'Alex' WHERE id = 1;
+UPDATE 1
+vk=> SELECT * FROM users WHERE id = 1;
+ id | first_name | last_name |     email     |     phone      | main_photo_id |     created_at      |          user_contacts
+----+------------+-----------+---------------+----------------+---------------+---------------------+----------------------------------
+  1 | Alex       | Knox      | ut@icloud.org | (431) 383-6224 |             1 | 2023-02-18 05:24:46 | (ut@icloud.org,"(431) 383-6224")
+(1 строка)
+
+
+2.
+postgres=# CREATE EXTENSION "uuid-ossp";
+CREATE EXTENSION
+postgres=# SELECT * FROM pg_extension;
+  oid  |  extname  | extowner | extnamespace | extrelocatable | extversion | extconfig | extcondition
+-------+-----------+----------+--------------+----------------+------------+-----------+--------------
+ 13438 | plpgsql   |       10 |           11 | f              | 1.0        |           |
+ 57348 | uuid-ossp |       10 |         2200 | t              | 1.1        |           |
+(2 строки)
+
+
+3.
+vk=> CREATE TABLE profiles (
+vk-> user_id INT NOT NULL,
+vk-> main_photo_id INT,
+vk-> user_contacts contacts,
+vk-> created_at TIMESTAMP,
+vk-> PRIMARY KEY (user_id)
+vk-> );
+CREATE TABLE
+vk=> ALTER TABLE profiles
+vk-> ADD CONSTRAINT profiles_user_id_fk
+vk-> FOREIGN KEY (user_id)
+vk-> REFERENCES users (id);
+ALTER TABLE
+vk=> ALTER TABLE profiles
+vk-> ADD CONSTRAINT profiles_main_photo_id_fk
+vk-> FOREIGN KEY (main_photo_id)
+vk-> REFERENCES photo (id);
+ALTER TABLE
+vk=> INSERT INTO profiles (user_id, main_photo_id, user_contacts, created_at)
+vk-> SELECT id, main_photo_id, user_contacts, created_at FROM users;
+INSERT 0 200
+vk=> SELECT * FROM profiles WHERE user_id = 3;
+ user_id | main_photo_id |                      user_contacts                       |     created_at
+---------+---------------+----------------------------------------------------------+---------------------
+       3 |             3 | (porttitor.vulputate.posuere@hotmail.edu,1-826-625-5106) | 2022-06-01 11:35:11
+(1 строка)
+
+vk=> ALTER TABLE users
+vk-> DROP COLUMN main_photo_id,
+vk-> DROP COLUMN user_contacts,
+vk-> DROP COLUMN created_at;
+ALTER TABLE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
