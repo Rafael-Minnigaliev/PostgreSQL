@@ -1,0 +1,68 @@
+1.
+CREATE FUNCTION user_who_wrote_the_most_messages(user_id INTEGER)
+RETURNS INTEGER AS
+$$
+	SELECT from_user_id
+	FROM messages
+	WHERE to_user_id = user_id
+	GROUP BY from_user_id
+	ORDER BY COUNT(*) DESC
+	LIMIT 1;
+$$
+LANGUAGE SQL;
+
+SELECT user_who_wrote_the_most_messages(6);
+
+
+2.
+CREATE OR REPLACE PROCEDURE checking_user_main_photo()
+LANGUAGE PLPGSQL AS
+$$
+	DECLARE owner_photo RECORD;
+	BEGIN
+		FOR owner_photo IN
+			SELECT profiles.user_id FROM
+			profiles
+			JOIN photo
+			ON profiles.main_photo_id = photo.id
+				WHERE profiles.user_id != photo.owner_id
+		LOOP
+			UPDATE profiles SET main_photo_id = NULL WHERE user_id = owner_photo.user_id;
+		END LOOP;
+		COMMIT;
+	END;
+$$
+
+CALL checking_user_main_photo();
+
+
+3.
+CREATE FUNCTION update_main_photo_trigger()
+RETURNS TRIGGER AS
+$$
+	DECLARE is_found BOOLEAN;
+	BEGIN
+		is_found := EXISTS(SELECT * FROM photo JOIN profiles ON photo.id = NEW.main_photo_id 
+					WHERE NEW.user_id != photo.owner_id);
+		IF is_found THEN
+			RAISE EXCEPTION 'The user with id = % is not the owner of the photo with id = %', NEW.user_id, NEW.main_photo_id ;
+		END IF;
+			RETURN NEW;	
+	END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_main_photo_updater BEFORE UPDATE ON profiles
+FOR EACH ROW
+EXECUTE FUNCTION update_main_photo_trigger();
+
+
+4.
+CREATE VIEW not_changeable_view_for_video AS
+SELECT COUNT(*) AS count FROM video WHERE size > 15000;
+SELECT * FROM not_changeable_view_for_video;
+
+CREATE VIEW changeable_view_for_video AS
+SELECT * FROM video;
+SELECT size FROM changeable_view_for_video WHERE id = 1;
+UPDATE changeable_view_for_video SET size = 10000 WHERE id = 1;
