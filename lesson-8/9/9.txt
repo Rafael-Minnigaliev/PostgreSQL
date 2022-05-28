@@ -1,0 +1,21 @@
+CREATE OR REPLACE FUNCTION create_store_trigger()
+RETURNS TRIGGER AS
+$$
+DECLARE is_found BOOLEAN;
+BEGIN
+is_found := EXISTS(SELECT users.inn FROM users WHERE NEW.owner_id = users.id AND is_sellers = false);
+IF is_found THEN
+	RAISE EXCEPTION 'A user with id = % cannot create a store', NEW.owner_id;
+END IF;
+	RETURN NEW;
+END
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_create_store BEFORE INSERT ON shops
+FOR EACH ROW
+EXECUTE FUNCTION create_store_trigger();
+
+CREATE TRIGGER check_update_store BEFORE UPDATE ON shops
+FOR EACH ROW
+EXECUTE FUNCTION create_store_trigger();

@@ -1,0 +1,14 @@
+SELECT
+users.id, 
+first_name,
+last_name 
+FROM users 
+WHERE id = (SELECT user_id FROM orders WHERE status_id = 1 LIMIT 1);
+
+SELECT
+name,
+photo_url,
+owner_id,
+created_at 
+FROM shops
+WHERE owner_id IN (SELECT id FROM users WHERE is_sellers = true);

@@ -1,0 +1,20 @@
+SELECT 
+orders.id AS order_id,
+users.id AS user_id,
+SUM(goods.price) AS order_sum,
+SUM(cart.count) AS count_goods_in_order
+FROM orders
+JOIN users ON orders.user_id = users.id
+JOIN cart ON orders.id = cart.order_id
+JOIN goods ON cart.goods_id = goods.id
+WHERE orders.status_id = 1 GROUP BY orders.id, users.id;
+
+SELECT 
+first_name,
+last_name,
+inn,
+shops.name AS shops_name, 
+shops.created_at
+FROM shops
+JOIN users ON users.id = shops.owner_id
+WHERE shops.created_at > NOW() - interval '1 month';

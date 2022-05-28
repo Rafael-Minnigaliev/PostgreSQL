@@ -1,0 +1,86 @@
+CREATE TABLE users (
+	id SERIAL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	last_name VARCHAR(50) NOT NULL,
+	email VARCHAR(200) NOT NULL UNIQUE,
+	phone VARCHAR(20) UNIQUE,
+	address VARCHAR(300),
+	photo_url VARCHAR(300) UNIQUE,
+	inn VARCHAR(20) DEFAULT 0,
+	is_sellers BOOLEAN,
+	created_at TIMESTAMP
+);
+
+
+CREATE TABLE shops (
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(120) NOT NULL UNIQUE,
+	description TEXT NOT NULL,
+	photo_url VARCHAR(300) UNIQUE,
+	owner_id INT NOT NULL,
+	created_at TIMESTAMP
+);
+
+CREATE TABLE subscriptions (
+	shop_id INT NOT NULL,
+	user_id INT NOT NULL,
+	confirmed_at TIMESTAMP,
+	PRIMARY KEY (shop_id, user_id)
+);
+
+CREATE TABLE messages (
+	id SERIAL PRIMARY KEY,
+	sender_id INT NOT NULL,
+	recipient_id INT NOT NULL,
+	body TEXT,
+	is_delivered BOOLEAN,
+	is_read BOOLEAN,
+	created_at TIMESTAMP
+);
+
+CREATE TABLE orders (
+	id SERIAL PRIMARY KEY,
+	user_id INT NOT NULL,
+	status_id INT NOT NULL,
+	created_at TIMESTAMP
+);
+
+CREATE TABLE order_status (
+	id SERIAL PRIMARY KEY,
+	status VARCHAR(200) NOT NULL UNIQUE
+);
+
+CREATE TABLE cart (
+	id SERIAL PRIMARY KEY, 
+	user_id INT NOT NULL,
+	goods_id INT NOT NULL,
+	count INT DEFAULT 1,
+	order_id INT DEFAULT NULL,
+	status INT DEFAULT 0,
+	created_at TIMESTAMP
+);
+
+CREATE TABLE goods (
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(100) NOT NULL,
+	main_photo_id INT NOT NULL,
+	price INT NOT NULL,
+	description VARCHAR(300) NOT NULL,
+	full_description TEXT NOT NULL,
+	category_id INT,
+	shop_id INT NOT NULL,
+	created_at TIMESTAMP
+);
+
+CREATE TABLE categories (
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE photo (
+	id SERIAL PRIMARY KEY,
+	url VARCHAR(250) NOT NULL UNIQUE,
+	good_id INT NOT NULL,
+	size INT NOT NULL,
+	uploaded_at TIMESTAMP
+);

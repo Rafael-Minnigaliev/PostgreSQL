@@ -1,0 +1,9 @@
+CREATE FUNCTION count_user_orders (u_id INTEGER)
+RETURNS BIGINT AS
+$$
+SELECT
+COUNT(*)
+FROM orders
+WHERE user_id = u_id;
+$$
+LANGUAGE SQL;

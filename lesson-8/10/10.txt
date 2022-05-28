@@ -1,0 +1,115 @@
+SELECT 
+orders.id AS order_id,
+users.id AS user_id,
+SUM(goods.price) AS order_sum,
+SUM(cart.count) AS count_goods_in_order
+FROM orders
+JOIN users ON orders.user_id = users.id
+JOIN cart ON orders.id = cart.order_id
+JOIN goods ON cart.goods_id = goods.id
+WHERE orders.status_id = 1 GROUP BY orders.id, users.id;
+
+
+//Таблиц без вложенных вложенных запросов что уже улучшает скорость выполнения запросов.
+
+
+aliexpress=> EXPLAIN ANALYZE SELECT
+aliexpress-> orders.id AS order_id,
+aliexpress-> users.id AS user_id,
+aliexpress-> SUM(goods.price) AS order_sum,
+aliexpress-> SUM(cart.count) AS count_goods_in_order
+aliexpress-> FROM orders
+aliexpress-> JOIN users ON orders.user_id = users.id
+aliexpress-> JOIN cart ON orders.id = cart.order_id
+aliexpress-> JOIN goods ON cart.goods_id = goods.id
+aliexpress-> WHERE orders.status_id = 1 GROUP BY orders.id, users.id;
+                                                              QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=23.31..23.53 rows=22 width=24) (actual time=0.126..0.130 rows=11 loops=1)
+   Group Key: orders.id, users.id
+   Batches: 1  Memory Usage: 24kB
+   ->  Nested Loop  (cost=10.28..23.09 rows=22 width=16) (actual time=0.078..0.120 rows=12 loops=1)
+         ->  Hash Join  (cost=10.13..16.00 rows=22 width=16) (actual time=0.072..0.099 rows=12 loops=1)
+               Hash Cond: (cart.order_id = orders.id)
+               ->  Seq Scan on cart  (cost=0.00..5.00 rows=200 width=12) (actual time=0.005..0.017 rows=200 loops=1)
+               ->  Hash  (cost=10.00..10.00 rows=11 width=8) (actual time=0.059..0.060 rows=11 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     ->  Hash Join  (cost=2.39..10.00 rows=11 width=8) (actual time=0.042..0.056 rows=11 loops=1)
+                           Hash Cond: (users.id = orders.user_id)
+                           ->  Seq Scan on users  (cost=0.00..6.00 rows=200 width=4) (actual time=0.002..0.015 rows=200 loops=1)
+                           ->  Hash  (cost=2.25..2.25 rows=11 width=8) (actual time=0.016..0.016 rows=11 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 ->  Seq Scan on orders  (cost=0.00..2.25 rows=11 width=8) (actual time=0.006..0.011 rows=11 loops=1)
+                                       Filter: (status_id = 1)
+                                       Rows Removed by Filter: 89
+         ->  Index Scan using goods_pkey on goods  (cost=0.14..0.32 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=12)
+               Index Cond: (id = cart.goods_id)
+ Planning Time: 0.658 ms
+ Execution Time: 0.273 ms
+(21 rows)
+
+
+aliexpress=>  SELECT indexname FROM pg_indexes WHERE tablename = 'orders';
+  indexname
+-------------
+ orders_pkey
+(1 row)
+
+
+aliexpress=>  SELECT indexname FROM pg_indexes WHERE tablename = 'cart';
+ indexname
+-----------
+ cart_pkey
+(1 row)
+
+
+aliexpress=> CREATE INDEX orders_user_id_fk ON orders (user_id);
+CREATE INDEX
+aliexpress=> CREATE INDEX cart_order_id_fk ON cart (order_id);
+CREATE INDEX
+aliexpress=> CREATE INDEX cart_goods_id_fk ON cart (goods_id);
+CREATE INDEX
+aliexpress=> EXPLAIN ANALYZE SELECT
+aliexpress-> orders.id AS order_id,
+aliexpress-> users.id AS user_id,
+aliexpress-> SUM(goods.price) AS order_sum,
+aliexpress-> SUM(cart.count) AS count_goods_in_order
+aliexpress-> FROM orders
+aliexpress-> JOIN users ON orders.user_id = users.id
+aliexpress-> JOIN cart ON orders.id = cart.order_id
+aliexpress-> JOIN goods ON cart.goods_id = goods.id
+aliexpress-> WHERE orders.status_id = 1 GROUP BY orders.id, users.id;
+                                                              QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=23.31..23.53 rows=22 width=24) (actual time=0.105..0.107 rows=11 loops=1)
+   Group Key: orders.id, users.id
+   Batches: 1  Memory Usage: 24kB
+   ->  Nested Loop  (cost=10.28..23.09 rows=22 width=16) (actual time=0.070..0.100 rows=12 loops=1)
+         ->  Hash Join  (cost=10.13..16.00 rows=22 width=16) (actual time=0.062..0.082 rows=12 loops=1)
+               Hash Cond: (cart.order_id = orders.id)
+               ->  Seq Scan on cart  (cost=0.00..5.00 rows=200 width=12) (actual time=0.005..0.014 rows=200 loops=1)
+               ->  Hash  (cost=10.00..10.00 rows=11 width=8) (actual time=0.052..0.053 rows=11 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     ->  Hash Join  (cost=2.39..10.00 rows=11 width=8) (actual time=0.041..0.052 rows=11 loops=1)
+                           Hash Cond: (users.id = orders.user_id)
+                           ->  Seq Scan on users  (cost=0.00..6.00 rows=200 width=4) (actual time=0.002..0.012 rows=200 loops=1)
+                           ->  Hash  (cost=2.25..2.25 rows=11 width=8) (actual time=0.015..0.015 rows=11 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 ->  Seq Scan on orders  (cost=0.00..2.25 rows=11 width=8) (actual time=0.005..0.008 rows=11 loops=1)
+                                       Filter: (status_id = 1)
+                                       Rows Removed by Filter: 89
+         ->  Index Scan using goods_pkey on goods  (cost=0.14..0.32 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=12)
+               Index Cond: (id = cart.goods_id)
+ Planning Time: 0.620 ms
+ Execution Time: 0.174 ms
+(21 rows)
+
+
+
+// Планировщик использует последовательное сканирование таблиц и
+не использует индексы. Время выполнения запроса практически не изменилось.
+Для маленьких таблиц СУБД бывает даже проще и быстрее выбрать все строки чем
+использовать индекс. Следует учитывать что СУБД выбирает оптимальный план выполнения запроса
+в том числе исходя из фактического объема данных.
+
+
