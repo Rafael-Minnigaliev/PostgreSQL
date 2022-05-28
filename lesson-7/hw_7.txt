@@ -1,0 +1,101 @@
+1.
+CREATE VIEW users_with_not_confirmed_friendships AS
+WITH users_with_confirmed_friendships AS
+(SELECT DISTINCT
+users.id
+FROM users
+	LEFT JOIN friendship f
+		ON users.id = f.requested_by_user_id
+		OR users.id = f.requested_to_user_id
+	LEFT JOIN friendship_statuses f_s
+		ON f.status_id = f_s.id
+WHERE f_s.name = 'confirmed')
+SELECT id FROM users WHERE id NOT IN (SELECT id FROM users_with_confirmed_friendships);
+
+BEGIN;
+
+DELETE FROM photo
+	USING users_with_not_confirmed_friendships
+WHERE photo.owner_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM video
+	USING users_with_not_confirmed_friendships
+WHERE video.owner_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM communities
+	USING users_with_not_confirmed_friendships
+WHERE communities.creator_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM communities_users
+	USING users_with_not_confirmed_friendships
+WHERE communities_users.user_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM friendship
+	USING users_with_not_confirmed_friendships
+WHERE friendship.requested_by_user_id = users_with_not_confirmed_friendships.id 
+OR friendship.requested_to_user_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM messages
+	USING users_with_not_confirmed_friendships
+WHERE messages.from_user_id = users_with_not_confirmed_friendships.id 
+OR messages.to_user_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM profiles
+	USING users_with_not_confirmed_friendships
+WHERE profiles.user_id = users_with_not_confirmed_friendships.id;
+
+DELETE FROM users
+	USING users_with_not_confirmed_friendships
+WHERE users.id = users_with_not_confirmed_friendships.id;
+
+ROLLBACK;
+
+
+2.
+WITH photo_c AS (SELECT DISTINCT
+users.id,
+first_name,
+last_name,
+COUNT(photo.id) OVER (PARTITION BY users.id) AS count_photo
+FROM users
+	LEFT JOIN photo 
+	ON users.id = photo.owner_id),
+video_c AS (SELECT DISTINCT
+users.id,
+COUNT(video.id) OVER (PARTITION BY users.id) AS count_video
+FROM users
+	LEFT JOIN video 
+	ON users.id = video.owner_id)
+SELECT
+photo_c.id AS user_id,
+first_name,
+last_name,
+count_photo,
+count_video,
+DENSE_RANK() OVER (ORDER BY count_photo DESC) AS user_rank_photo,
+DENSE_RANK() OVER (ORDER BY count_video DESC) AS user_ranc_video
+FROM photo_c
+	FULL JOIN video_c
+	ON photo_c.id = video_c.id
+ORDER BY photo_c.id;
+
+
+3.
+WITH videos AS (SELECT
+communities.name AS communities_name,				
+communities_users.user_id,
+video.size AS video_size									 
+FROM video
+	JOIN communities_users
+	ON video.owner_id = communities_users.user_id
+	RIGHT JOIN communities
+	ON communities_users.community_id = communities.id)
+SELECT DISTINCT
+communities_name,
+FIRST_VALUE(user_id) OVER (PARTITION BY communities_name ORDER BY video_size DESC NULLS LAST) AS user_id,
+FIRST_VALUE(first_name) OVER (PARTITION BY communities_name ORDER BY video_size DESC NULLS LAST) AS user_first_name,
+FIRST_VALUE(last_name) OVER (PARTITION BY communities_name ORDER BY video_size DESC NULLS LAST) AS user_last_name,
+AVG(video_size) OVER(PARTITION BY communities_name) AS avg_size_video
+FROM videos
+	LEFT JOIN users
+	ON videos.user_id = users.id;
